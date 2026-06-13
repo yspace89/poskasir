@@ -23,22 +23,6 @@ function App() {
         .eq('id', session.user.id)
         .single();
 
-      if (!profile) {
-         // Fallback if trigger hasn't finished or something
-         let userRole = 'kasir';
-         let userName = session.user.email.split('@')[0];
-         
-         if (session.user.email === 'admintrainee@toko.com' || session.user.email === 'adminttrainee@toko.com') {
-           userRole = 'trainee';
-           userName = 'Admin Trainee';
-         } else if (session.user.email === 'admin@toko.com' || session.user.email === 'admin.pos123@gmail.com') {
-           userRole = 'admin';
-           userName = 'Administrator';
-         }
-         
-         profile = { full_name: userName, role: userRole };
-      }
-
       // 2. Start Shift Log
       const { data: shift } = await supabase
         .from('shift_logs')
@@ -48,11 +32,23 @@ function App() {
 
       if (shift) setShiftId(shift.id);
 
+      // Override profile role with hardcoded mapping for these specific testing accounts
+      let userRole = profile?.role || 'kasir';
+      let userName = profile?.full_name || session.user.email.split('@')[0];
+
+      if (session.user.email === 'admintrainee@toko.com' || session.user.email === 'adminttrainee@toko.com') {
+        userRole = 'trainee';
+        userName = 'Admin Trainee';
+      } else if (session.user.email === 'admin@toko.com' || session.user.email === 'admin.pos123@gmail.com') {
+        userRole = 'admin';
+        userName = 'Administrator';
+      }
+
       setUser({
         id: session.user.id,
-        name: profile.full_name || session.user.email.split('@')[0],
+        name: userName,
         email: session.user.email,
-        role: profile.role,
+        role: userRole,
         loginAt: shift ? shift.start_time : session.user.last_sign_in_at || new Date().toISOString()
       });
     } catch (err) {
