@@ -22,11 +22,11 @@ function App() {
         .select('*')
         .eq('id', session.user.id)
         .single();
-        
+
       if (!profile) {
-         // Fallback if trigger hasn't finished or something
-         const isAdminTrainee = session.user.email.includes('admin');
-         profile = { full_name: isAdminTrainee ? 'Admin Trainee' : session.user.email.split('@')[0], role: isAdminTrainee ? 'trainee' : 'kasir' };
+        // Fallback if trigger hasn't finished or something
+        const isAdminTrainee = session.user.email.includes('admin');
+        profile = { full_name: isAdminTrainee ? 'Admin Trainee' : session.user.email.split('@')[0], role: isAdminTrainee ? 'trainee' : 'kasir' };
       }
 
       // 2. Start Shift Log
@@ -35,7 +35,7 @@ function App() {
         .insert([{ user_id: session.user.id }])
         .select()
         .single();
-        
+
       if (shift) setShiftId(shift.id);
 
       setUser({
@@ -74,12 +74,12 @@ function App() {
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
   if (!user) {
-    return <Login onLogin={() => {}} />; // authStateChange will handle the state update
+    return <Login onLogin={() => { }} />; // authStateChange will handle the state update
   }
 
   const handleLogout = async () => {
     if (shiftId) {
-       await supabase.from('shift_logs').update({ end_time: new Date().toISOString() }).eq('id', shiftId);
+      await supabase.from('shift_logs').update({ end_time: new Date().toISOString() }).eq('id', shiftId);
     }
     await supabase.auth.signOut();
   };
