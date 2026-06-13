@@ -24,9 +24,19 @@ function App() {
         .single();
 
       if (!profile) {
-        // Fallback if trigger hasn't finished or something
-        const isAdminTrainee = session.user.email.includes('admin');
-        profile = { full_name: isAdminTrainee ? 'Admin Trainee' : session.user.email.split('@')[0], role: isAdminTrainee ? 'trainee' : 'kasir' };
+         // Fallback if trigger hasn't finished or something
+         let userRole = 'kasir';
+         let userName = session.user.email.split('@')[0];
+         
+         if (session.user.email === 'admintrainee@toko.com' || session.user.email === 'adminttrainee@toko.com') {
+           userRole = 'trainee';
+           userName = 'Admin Trainee';
+         } else if (session.user.email === 'admin@toko.com' || session.user.email === 'admin.pos123@gmail.com') {
+           userRole = 'admin';
+           userName = 'Administrator';
+         }
+         
+         profile = { full_name: userName, role: userRole };
       }
 
       // 2. Start Shift Log

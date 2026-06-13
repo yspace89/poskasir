@@ -5,6 +5,7 @@ import './Sidebar.css';
 
 export default function Sidebar({ onLogout, user }) {
   const [duration, setDuration] = useState('00:00:00');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     // Gunakan user.loginAt dari Supabase, atau waktu komponen pertama kali dimuat jika undefined
@@ -42,6 +43,23 @@ export default function Sidebar({ onLogout, user }) {
         </div>
       </div>
       <nav className="sidebar-nav">
+        {user?.email === 'admin@toko.com' && (
+          <button 
+            className="btn btn-primary" 
+            style={{ marginBottom: '1rem', fontSize: '12px' }}
+            disabled={isUpdating}
+            onClick={async () => {
+              setIsUpdating(true);
+              const { supabase } = await import('../db/supabaseClient');
+              const { error } = await supabase.auth.updateUser({ email: 'admintrainee@toko.com' });
+              if (error) alert('Gagal: ' + error.message);
+              else alert('Email berhasil diubah menjadi admintrainee@toko.com! Silakan Tutup Shift dan Login ulang dengan email baru tersebut.');
+              setIsUpdating(false);
+            }}
+          >
+            Ubah Email ke Trainee
+          </button>
+        )}
         <NavLink to="/pos" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
           <ShoppingCart size={20} />
           <span>Point of Sale</span>
