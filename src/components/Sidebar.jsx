@@ -46,7 +46,7 @@ export default function Sidebar({ onLogout, user }) {
           <ShoppingCart size={20} />
           <span>Point of Sale</span>
         </NavLink>
-        {user?.role === 'admin' && (
+        {['admin', 'trainee'].includes(user?.role) && (
           <>
             <NavLink to="/products" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
               <Package size={20} />

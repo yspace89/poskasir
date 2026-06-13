@@ -95,7 +95,7 @@ function App() {
               {['admin', 'trainee'].includes(user.role) && (
                 <>
                   <Route path="/products" element={<ProductManagement userRole={user.role} />} />
-                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/reports" element={<Reports userRole={user.role} />} />
                 </>
               )}
               <Route path="*" element={<Navigate to="/pos" replace />} />

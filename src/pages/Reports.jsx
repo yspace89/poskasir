@@ -5,7 +5,7 @@ import Receipt from '../components/Receipt';
 import ConfirmModal from '../components/ConfirmModal';
 import './Reports.css';
 
-export default function Reports() {
+export default function Reports({ userRole }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewReceipt, setViewReceipt] = useState(null);
@@ -13,6 +13,15 @@ export default function Reports() {
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [transactionToVoid, setTransactionToVoid] = useState(null);
+  const [accessDeniedMessage, setAccessDeniedMessage] = useState(null);
+
+  const checkAccess = () => {
+    if (userRole === 'trainee') {
+      setAccessDeniedMessage('Maaf, peran Admin Trainee tidak memiliki izin untuk membatalkan transaksi.');
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
     fetchTransactions();
@@ -212,7 +221,9 @@ export default function Reports() {
                       </button>
                     )}
                     {trx.status === 'completed' && trx.transaction_items && (
-                      <button className="btn-icon" title="Void Transaksi" onClick={() => setTransactionToVoid(trx)}>
+                      <button className="btn-icon" title="Void Transaksi" onClick={() => {
+                        if(checkAccess()) setTransactionToVoid(trx);
+                      }}>
                         <RotateCcw size={16} className="text-danger" />
                       </button>
                     )}
@@ -236,6 +247,15 @@ export default function Reports() {
         confirmText="Ya, Batalkan Transaksi"
         onConfirm={handleVoidConfirm}
         onCancel={() => setTransactionToVoid(null)}
+      />
+
+      <ConfirmModal 
+        isOpen={!!accessDeniedMessage}
+        title="Akses Ditolak"
+        message={accessDeniedMessage}
+        type="warning"
+        isAlert={true}
+        onCancel={() => setAccessDeniedMessage(null)}
       />
     </div>
   );
