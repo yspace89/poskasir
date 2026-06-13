@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { supabase } from '../db/supabaseClient';
 import { Trash2, Plus, Minus, Tag } from 'lucide-react';
+import ConfirmModal from './ConfirmModal';
 import './Cart.css';
 
 export default function Cart({ onCheckout }) {
@@ -19,6 +20,7 @@ export default function Cart({ onCheckout }) {
 
   const [discountCode, setDiscountCode] = useState('');
   const [discountError, setDiscountError] = useState('');
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const applyDiscount = async () => {
     setDiscountError('');
@@ -67,7 +69,7 @@ export default function Cart({ onCheckout }) {
       <div className="cart-header">
         <h2 className="text-lg font-bold">Keranjang</h2>
         {cart.length > 0 && (
-          <button className="btn btn-outline text-danger" onClick={clearCart}>
+          <button className="btn btn-outline text-danger" onClick={() => setShowClearConfirm(true)}>
             <Trash2 size={16} />
             Bersihkan
           </button>
@@ -153,6 +155,16 @@ export default function Cart({ onCheckout }) {
           </button>
         </div>
       )}
+
+      <ConfirmModal 
+        isOpen={showClearConfirm}
+        title="Kosongkan Keranjang"
+        message="Apakah Anda yakin ingin membuang semua pesanan di keranjang ini?"
+        type="danger"
+        confirmText="Ya, Kosongkan"
+        onConfirm={() => clearCart()}
+        onCancel={() => setShowClearConfirm(false)}
+      />
     </div>
   );
 }

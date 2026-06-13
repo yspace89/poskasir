@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../db/supabaseClient';
 import { RotateCcw, Eye } from 'lucide-react';
 import Receipt from '../components/Receipt';
+import ConfirmModal from '../components/ConfirmModal';
 import './Reports.css';
 
 export default function Reports() {
@@ -11,6 +12,7 @@ export default function Reports() {
   const [dateFilter, setDateFilter] = useState('today');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  const [transactionToVoid, setTransactionToVoid] = useState(null);
 
   useEffect(() => {
     fetchTransactions();
@@ -75,19 +77,19 @@ export default function Reports() {
   const totalRevenue = transactions?.filter(t => t.status === 'completed').reduce((sum, t) => sum + t.total, 0) || 0;
   const totalTransactions = transactions?.filter(t => t.status === 'completed').length || 0;
 
-  const handleVoid = async (transaction) => {
-    if (window.confirm('Apakah Anda yakin ingin membatalkan (VOID) transaksi ini? Stok akan dikembalikan.')) {
+  const handleVoidConfirm = async () => {
+    if (transactionToVoid) {
       try {
         // 1. Update transaction status
         const { error: trxError } = await supabase
           .from('transactions')
           .update({ status: 'voided' })
-          .eq('id', transaction.id);
+          .eq('id', transactionToVoid.id);
           
         if (trxError) throw trxError;
 
         // 2. Restore stock
-        for (const item of transaction.transaction_items) {
+        for (const item of transactionToVoid.transaction_items) {
           const { data: product } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
           if (product) {
             await supabase.from('products').update({
@@ -96,6 +98,7 @@ export default function Reports() {
           }
         }
 
+        setTransactionToVoid(null);
         fetchTransactions();
       } catch (err) {
         console.error('Error voiding transaction:', err);
@@ -194,7 +197,7 @@ export default function Reports() {
                 <tr key={trx.id} className={trx.status === 'voided' ? 'opacity-50' : ''}>
                   <td>TRX-{trx.id}</td>
                   <td>{new Date(trx.date).toLocaleString('id-ID')}</td>
-                  <td>{trx.profiles?.full_name || 'Unknown'}</td>
+                  <td>{trx.profiles?.full_name || 'Admin'}</td>
                   <td className="uppercase">{trx.payment_method}</td>
                   <td className="font-medium">Rp {trx.total.toLocaleString('id-ID')}</td>
                   <td>
@@ -209,7 +212,7 @@ export default function Reports() {
                       </button>
                     )}
                     {trx.status === 'completed' && trx.transaction_items && (
-                      <button className="btn-icon" title="Void Transaksi" onClick={() => handleVoid(trx)}>
+                      <button className="btn-icon" title="Void Transaksi" onClick={() => setTransactionToVoid(trx)}>
                         <RotateCcw size={16} className="text-danger" />
                       </button>
                     )}
@@ -224,6 +227,16 @@ export default function Reports() {
       {viewReceipt && (
         <Receipt transaction={viewReceipt} onClose={() => setViewReceipt(null)} />
       )}
+
+      <ConfirmModal 
+        isOpen={!!transactionToVoid}
+        title="Void Transaksi"
+        message="Apakah Anda yakin ingin membatalkan (VOID) transaksi ini? Stok produk akan dikembalikan otomatis ke inventaris."
+        type="warning"
+        confirmText="Ya, Batalkan Transaksi"
+        onConfirm={handleVoidConfirm}
+        onCancel={() => setTransactionToVoid(null)}
+      />
     </div>
   );
 }

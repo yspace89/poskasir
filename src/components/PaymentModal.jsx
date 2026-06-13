@@ -23,9 +23,13 @@ export default function PaymentModal({ onClose, onSuccess }) {
 
       // Ambil cashier_name dari profiles jika ada
       let cashierName = 'Kasir';
+      let validCashierId = null;
       if (userId) {
-         const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', userId).single();
-         if (profile && profile.full_name) cashierName = profile.full_name;
+         const { data: profile } = await supabase.from('profiles').select('id, full_name').eq('id', userId).single();
+         if (profile) {
+             if (profile.full_name) cashierName = profile.full_name;
+             validCashierId = profile.id;
+         }
       }
 
       // 1. Create Transaction Record
@@ -36,7 +40,7 @@ export default function PaymentModal({ onClose, onSuccess }) {
         payment_method: paymentMethod,
         tendered_amount: tenderedAmount,
         change,
-        cashier_id: userId,
+        cashier_id: validCashierId,
         status: 'completed'
       }]).select();
 

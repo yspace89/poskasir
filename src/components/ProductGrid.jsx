@@ -75,8 +75,13 @@ export default function ProductGrid() {
                   disabled={isOutOfStock}
                 >
                   <div className="product-image-container">
-                    <img src={product.image_url || 'https://via.placeholder.com/150'} alt={product.name} />
+                    <img 
+                      src={product.image_url || 'https://placehold.co/400x400/eeeeee/333333?text=Foto+Produk'} 
+                      alt={product.name} 
+                      onError={(e) => { e.target.onerror = null; e.target.src = `https://placehold.co/400x400/eeeeee/333333?text=${encodeURIComponent(product.name)}` }}
+                    />
                     <span className="stock-badge">Sisa: {currentStock}</span>
+                    {cartItem && <span className="in-cart-badge">Di Keranjang</span>}
                   </div>
                   <div className="product-info">
                     <h3 className="product-name">{product.name}</h3>

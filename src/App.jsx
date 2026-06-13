@@ -25,8 +25,8 @@ function App() {
         
       if (!profile) {
          // Fallback if trigger hasn't finished or something
-         const isAdmin = session.user.email.includes('admin');
-         profile = { full_name: session.user.email.split('@')[0], role: isAdmin ? 'admin' : 'kasir' };
+         const isAdminTrainee = session.user.email.includes('admin');
+         profile = { full_name: isAdminTrainee ? 'Admin Trainee' : session.user.email.split('@')[0], role: isAdminTrainee ? 'trainee' : 'kasir' };
       }
 
       // 2. Start Shift Log
@@ -92,9 +92,9 @@ function App() {
           <main className="main-content">
             <Routes>
               <Route path="/pos" element={<POS />} />
-              {user.role === 'admin' && (
+              {['admin', 'trainee'].includes(user.role) && (
                 <>
-                  <Route path="/products" element={<ProductManagement />} />
+                  <Route path="/products" element={<ProductManagement userRole={user.role} />} />
                   <Route path="/reports" element={<Reports />} />
                 </>
               )}

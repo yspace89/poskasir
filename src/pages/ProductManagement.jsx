@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../db/supabaseClient';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 import './ProductManagement.css';
 
-export default function ProductManagement() {
+export default function ProductManagement({ userRole }) {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -19,6 +22,15 @@ export default function ProductManagement() {
     stock: '',
     image_url: ''
   });
+  const [accessDeniedMessage, setAccessDeniedMessage] = useState(null);
+
+  const checkAccess = () => {
+    if (userRole === 'trainee') {
+      setAccessDeniedMessage('Maaf, peran Admin Trainee tidak memiliki izin untuk mengedit atau menghapus data produk ini.');
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -116,9 +128,10 @@ export default function ProductManagement() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
-      await supabase.from('products').delete().eq('id', id);
+  const handleDeleteConfirm = async () => {
+    if (productToDelete) {
+      await supabase.from('products').delete().eq('id', productToDelete);
+      setProductToDelete(null);
       fetchProducts();
     }
   };
@@ -147,6 +160,7 @@ export default function ProductManagement() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr>
+              <th>Gambar</th>
               <th>SKU</th>
               <th>Nama Produk</th>
               <th>Kategori</th>
@@ -167,6 +181,20 @@ export default function ProductManagement() {
             ) : (
               products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map(product => (
                 <tr key={product.id}>
+                  <td style={{ width: '60px' }}>
+                    <div 
+                      style={{ width: '40px', height: '40px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #ccc', cursor: 'pointer' }}
+                      onClick={() => setPreviewImage(product.image_url)}
+                      title="Klik untuk memperbesar"
+                    >
+                      <img 
+                        src={product.image_url || 'https://placehold.co/400x400/eeeeee/333333?text=Foto'} 
+                        alt={product.name} 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { e.target.onerror = null; e.target.src = `https://placehold.co/40x40/eeeeee/333333?text=${encodeURIComponent(product.name.charAt(0))}` }}
+                      />
+                    </div>
+                  </td>
                   <td>{product.sku}</td>
                   <td className="font-medium">{product.name}</td>
                   <td>{product.categories?.name || 'Uncategorized'}</td>
@@ -177,10 +205,14 @@ export default function ProductManagement() {
                     </span>
                   </td>
                   <td className="text-right">
-                    <button className="btn-icon mr-2" onClick={() => handleOpenModal(product)}>
+                    <button className="btn-icon mr-2" onClick={() => {
+                      if(checkAccess()) handleOpenModal(product);
+                    }}>
                       <Edit2 size={16} className="text-primary" />
                     </button>
-                    <button className="btn-icon" onClick={() => handleDelete(product.id)}>
+                    <button className="btn-icon" onClick={() => {
+                      if(checkAccess()) setProductToDelete(product.id);
+                    }}>
                       <Trash2 size={16} className="text-danger" />
                     </button>
                   </td>
@@ -190,6 +222,32 @@ export default function ProductManagement() {
           </tbody>
         </table>
       </div>
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div 
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)' }} 
+          onClick={() => setPreviewImage(null)}
+        >
+          <div 
+            style={{ position: 'relative', maxWidth: '800px', maxHeight: '90vh', borderRadius: '8px', overflow: 'hidden' }} 
+            onClick={e => e.stopPropagation()}
+          >
+            <button 
+              style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: 'rgba(0,0,0,0.5)', color: 'white', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
+              onClick={() => setPreviewImage(null)}
+            >
+              ✕
+            </button>
+            <img 
+              src={previewImage} 
+              alt="Preview" 
+              style={{ maxWidth: '100%', maxHeight: '85vh', objectFit: 'contain', backgroundColor: 'white' }}
+              onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/800x800/eeeeee/333333?text=Gambar+Rusak' }}
+            />
+          </div>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="modal-overlay">
@@ -261,6 +319,25 @@ export default function ProductManagement() {
           </div>
         </div>
       )}
+
+      <ConfirmModal 
+        isOpen={!!productToDelete}
+        title="Hapus Produk"
+        message="Apakah Anda yakin ingin menghapus produk ini? Tindakan ini akan menghapus produk secara permanen dari sistem."
+        type="danger"
+        confirmText="Ya, Hapus"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setProductToDelete(null)}
+      />
+
+      <ConfirmModal 
+        isOpen={!!accessDeniedMessage}
+        title="Akses Ditolak"
+        message={accessDeniedMessage}
+        type="warning"
+        isAlert={true}
+        onCancel={() => setAccessDeniedMessage(null)}
+      />
     </div>
   );
 }
