@@ -26,7 +26,7 @@ export default function ProductManagement({ userRole }) {
 
   const checkAccess = () => {
     if (userRole === 'trainee') {
-      setAccessDeniedMessage('Maaf, peran Admin Trainee tidak memiliki izin untuk mengedit atau menghapus data produk ini.');
+      setAccessDeniedMessage('Maaf, peran Admin Trainee tidak memiliki izin untuk menambah, mengedit, atau menghapus data produk ini.');
       return false;
     }
     return true;
@@ -150,7 +150,9 @@ export default function ProductManagement({ userRole }) {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button className="btn btn-primary" onClick={() => handleOpenModal()}>
+          <button className="btn btn-primary" onClick={() => {
+            if(checkAccess()) handleOpenModal();
+          }}>
             <Plus size={18} /> Tambah Produk
           </button>
         </div>
