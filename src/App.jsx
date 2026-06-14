@@ -16,6 +16,7 @@ import Dashboard from './pages/Dashboard';
 import TeamManagement from './pages/TeamManagement';
 import DiscountManagement from './pages/DiscountManagement';
 import StoreSettings from './pages/StoreSettings';
+import Billing from './pages/Billing';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,6 +71,7 @@ function AppInner({ user, onLogout }) {
                 <Route path="/store-settings" element={<StoreSettings />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/team" element={<TeamManagement />} />
+                <Route path="/billing" element={<Billing />} />
                 <Route path="/settings" element={<Settings />} />
               </>
             )}

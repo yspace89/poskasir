@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ShoppingCart, Package, BarChart3, LogOut, Clock, Settings, Users, Tag, LayoutDashboard, ChevronDown, Store, Lock } from 'lucide-react';
+import { ShoppingCart, Package, BarChart3, LogOut, Clock, Settings, Users, Tag, LayoutDashboard, ChevronDown, Store, Lock, CreditCard } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { usePlan } from '../context/PlanContext';
 import './Sidebar.css';
@@ -138,6 +138,12 @@ export default function Sidebar({ onLogout, user }) {
         <NavLink to="/store-settings" className={navLinkClass} onClick={(e) => !can('manage_store') && e.preventDefault()}>
           <Settings size={18} />
           <span>Pengaturan Cabang</span>
+          {!can('manage_store') && <Lock size={14} className="text-muted ml-auto" />}
+        </NavLink>
+
+        <NavLink to="/billing" className={navLinkClass} onClick={(e) => !can('manage_store') && e.preventDefault()}>
+          <CreditCard size={18} />
+          <span>Langganan & Tagihan</span>
           {!can('manage_store') && <Lock size={14} className="text-muted ml-auto" />}
         </NavLink>
       </nav>

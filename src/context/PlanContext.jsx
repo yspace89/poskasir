@@ -40,7 +40,13 @@ const PREMIUM_FEATURES = [
 export const PlanProvider = ({ children }) => {
   const { org } = useStore();
 
-  const plan = org?.plan || 'free';
+  const dbPlan = org?.plan || 'free';
+  const expiresAt = org?.plan_expires_at ? new Date(org.plan_expires_at) : null;
+  const isExpired = expiresAt && new Date() > expiresAt;
+  
+  // Jika premium tapi sudah expired, paksa turun ke free
+  const plan = (dbPlan === 'premium' && isExpired) ? 'free' : dbPlan;
+  
   const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
 
   // Cek apakah sebuah fitur tersedia di plan ini
@@ -57,14 +63,15 @@ export const PlanProvider = ({ children }) => {
   }, [limits]);
 
   return (
-    <PlanContext.Provider value={{
-      plan,
-      limits,
-      canUse,
-      withinLimit,
-      isPremium: plan === 'premium',
-      isFree: plan === 'free',
-    }}>
+      <PlanContext.Provider value={{
+        plan,
+        limits,
+        canUse,
+        withinLimit,
+        isPremium: plan === 'premium',
+        isFree: plan === 'free',
+        expiresAt,
+      }}>
       {children}
     </PlanContext.Provider>
   );
