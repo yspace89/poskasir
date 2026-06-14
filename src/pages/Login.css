@@ -25,10 +25,7 @@
   flex: 1;
   display: none; /* Hide on mobile */
   position: relative;
-  background-image: url('../assets/login-bg.png');
-  background-size: cover;
-  background-position: center;
-  background-color: #0B1120; /* fallback dark elegant blue */
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
 }
 
 @media (min-width: 768px) {
@@ -116,7 +113,8 @@
 }
 
 .floating-input:focus ~ .floating-label,
-.floating-input:not(:placeholder-shown) ~ .floating-label {
+.floating-input:not(:placeholder-shown) ~ .floating-label,
+.floating-input:-webkit-autofill ~ .floating-label {
   top: 0.8rem;
   font-size: 0.75rem;
   font-weight: 600;
