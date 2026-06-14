@@ -3,7 +3,6 @@ import ProductGrid from '../components/ProductGrid';
 import Cart from '../components/Cart';
 import PaymentModal from '../components/PaymentModal';
 import Receipt from '../components/Receipt';
-import './POS.css';
 
 export default function POS() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
@@ -23,16 +22,16 @@ export default function POS() {
   };
 
   return (
-    <div className="pos-container">
-      <div className="pos-main">
-        <header className="pos-header">
+    <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-3rem)] gap-6">
+      <div className="flex-1 flex flex-col">
+        <header className="mb-6">
           <h1 className="text-2xl font-bold">Kasir</h1>
         </header>
-        <div className="pos-content">
+        <div className="flex-1 overflow-y-auto">
           <ProductGrid />
         </div>
       </div>
-      <div className="pos-sidebar">
+      <div className="w-full lg:w-[350px] h-[500px] lg:h-full bg-white rounded-xl shadow-sm border border-border flex flex-col">
         <Cart onCheckout={handleCheckout} />
       </div>
 

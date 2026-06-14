@@ -1,11 +1,11 @@
 -- ============================================================
--- KASIRIND — Schema Database Multi-Tenant SaaS
+-- Kassa — Schema Database Multi-Tenant SaaS
 -- Version 2.0
 -- PERHATIAN: Jalankan di Supabase SQL Editor
 -- ============================================================
 
 -- ============================================================
--- BAGIAN 1: HAPUS SEMUA TABEL LAMA (URUTAN BENAR)
+-- BAGIAN 1: HAPUS SEMUA TABEL LAMA (CASCADE otomatis drop trigger)
 -- ============================================================
 DROP TABLE IF EXISTS stock_logs CASCADE;
 DROP TABLE IF EXISTS shift_logs CASCADE;
@@ -21,13 +21,19 @@ DROP TABLE IF EXISTS stores CASCADE;
 DROP TABLE IF EXISTS organizations CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
 
--- Drop triggers & functions lama
+-- Drop trigger di auth.users (tidak ikut CASCADE karena bukan tabel kita)
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP TRIGGER IF EXISTS trg_reduce_stock ON transaction_items;
-DROP TRIGGER IF EXISTS trg_restore_stock ON transactions;
-DROP FUNCTION IF EXISTS public.handle_new_user();
-DROP FUNCTION IF EXISTS reduce_stock_on_sale();
-DROP FUNCTION IF EXISTS restore_stock_on_void();
+
+-- Drop functions lama (pakai DO block agar aman jika belum ada)
+DO $$ BEGIN
+  DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+  DROP FUNCTION IF EXISTS public.reduce_stock_on_sale() CASCADE;
+  DROP FUNCTION IF EXISTS public.restore_stock_on_void() CASCADE;
+  DROP FUNCTION IF EXISTS public.get_user_store_ids() CASCADE;
+  DROP FUNCTION IF EXISTS public.get_user_org_ids() CASCADE;
+EXCEPTION WHEN OTHERS THEN
+  NULL; -- abaikan error jika function tidak ditemukan
+END $$;
 
 
 -- ============================================================
@@ -422,9 +428,32 @@ CREATE POLICY "stock_logs_insert" ON stock_logs FOR INSERT
 
 
 -- ============================================================
--- BAGIAN 6: REALTIME
+-- BAGIAN 6: REALTIME (aman, tidak error jika sudah terdaftar)
 -- ============================================================
-ALTER PUBLICATION supabase_realtime ADD TABLE products;
-ALTER PUBLICATION supabase_realtime ADD TABLE transactions;
-ALTER PUBLICATION supabase_realtime ADD TABLE stock_logs;
-ALTER PUBLICATION supabase_realtime ADD TABLE shift_logs;
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE products;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE transactions;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE stock_logs;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE shift_logs;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ============================================================
+-- SELESAI — Schema Kassa v2.0 berhasil dijalankan
+-- ============================================================

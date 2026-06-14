@@ -1,7 +1,10 @@
 import { X, Printer } from 'lucide-react';
+import { useStore } from '../context/StoreContext';
 import './Receipt.css';
 
 export default function Receipt({ transaction, onClose }) {
+  const { store } = useStore();
+
   const handlePrint = () => {
     window.print();
   };
@@ -19,10 +22,10 @@ export default function Receipt({ transaction, onClose }) {
 
         <div className="modal-body receipt-body" id="printable-receipt">
           <div className="receipt-header text-center mb-4">
-            <h2 className="font-bold text-xl">TOKO KASIR POS</h2>
-            <p className="text-sm">Jl. Contoh Alamat No. 123</p>
-            <p className="text-sm">Telp: 08123456789</p>
-            <hr className="my-2 border-dashed" />
+            <h2 className="font-bold text-xl uppercase">{store?.name || 'KASIR POS'}</h2>
+            {store?.address && <p className="text-sm">{store.address}</p>}
+            {store?.phone && <p className="text-sm">Telp: {store.phone}</p>}
+            <hr className="my-2 border-dashed border-gray-400" />
           </div>
           
           <div className="receipt-meta text-sm mb-4">
@@ -31,7 +34,7 @@ export default function Receipt({ transaction, onClose }) {
             <p>No. Trans: TRX-{transaction.id}</p>
           </div>
 
-          <hr className="my-2 border-dashed" />
+          <hr className="my-2 border-dashed border-gray-400" />
 
           <div className="receipt-items mb-4">
             {transaction.items.map((item, idx) => (
@@ -45,7 +48,7 @@ export default function Receipt({ transaction, onClose }) {
             ))}
           </div>
 
-          <hr className="my-2 border-dashed" />
+          <hr className="my-2 border-dashed border-gray-400" />
 
           <div className="receipt-summary text-sm">
             <div className="flex justify-between mb-1">
@@ -80,7 +83,7 @@ export default function Receipt({ transaction, onClose }) {
             )}
           </div>
 
-          <hr className="my-4 border-dashed" />
+          <hr className="my-4 border-dashed border-gray-400" />
           
           <div className="receipt-footer text-center text-sm">
             <p>Terima kasih atas kunjungan Anda!</p>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { supabase } from './db/supabaseClient';
-import { CartProvider } from './context/CartContext';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { PlanProvider } from './context/PlanContext';
 import Sidebar from './components/Sidebar';
@@ -15,16 +15,28 @@ import Settings from './pages/Settings';
 import Dashboard from './pages/Dashboard';
 import TeamManagement from './pages/TeamManagement';
 import DiscountManagement from './pages/DiscountManagement';
-import './App.css';
+import StoreSettings from './pages/StoreSettings';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+import { useSyncEngine } from './hooks/useSyncEngine';
 
 // Inner app: hanya dirender kalau sudah ada user & store context
 function AppInner({ user, onLogout }) {
   const { store, loading: storeLoading, role } = useStore();
+  useSyncEngine(); // Jalankan engine sinkronisasi offline-first
 
   if (storeLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="loading-spinner" />
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -42,37 +54,36 @@ function AppInner({ user, onLogout }) {
   }
 
   return (
-    <CartProvider>
-      <Router>
-        <div className="app-container">
-          <Sidebar user={user} onLogout={onLogout} />
-          <main className="main-content">
-            <Routes>
-              {/* Semua user bisa akses POS */}
-              <Route path="/pos" element={<POS />} />
+    <Router>
+      <div className="flex min-h-screen bg-bg-main text-text-main">
+        <Sidebar user={user} onLogout={onLogout} />
+        <main className="flex-1 p-6 overflow-y-auto h-screen">
+          <Routes>
+            {/* Semua user bisa akses POS */}
+            <Route path="/pos" element={<POS />} />
 
-              {/* Hanya role yang punya akses manage_products */}
-              {['owner', 'manager'].includes(role) && (
-                <>
-                  <Route path="/products" element={<ProductManagement />} />
-                  <Route path="/discounts" element={<DiscountManagement />} />
-                  <Route path="/reports" element={<Reports />} />
-                  <Route path="/team" element={<TeamManagement />} />
-                  <Route path="/settings" element={<Settings />} />
-                </>
-              )}
+            {/* Hanya role yang punya akses manage_products */}
+            {['owner', 'manager'].includes(role) && (
+              <>
+                <Route path="/products" element={<ProductManagement />} />
+                <Route path="/discounts" element={<DiscountManagement />} />
+                <Route path="/store-settings" element={<StoreSettings />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/team" element={<TeamManagement />} />
+                <Route path="/settings" element={<Settings />} />
+              </>
+            )}
 
-              {/* Dashboard untuk semua role selain cashier basic */}
-              {['owner', 'manager', 'cashier'].includes(role) && (
-                <Route path="/dashboard" element={<Dashboard />} />
-              )}
+            {/* Dashboard untuk semua role selain cashier basic */}
+            {['owner', 'manager', 'cashier'].includes(role) && (
+              <Route path="/dashboard" element={<Dashboard />} />
+            )}
 
-              <Route path="*" element={<Navigate to="/pos" replace />} />
-            </Routes>
-          </main>
-        </div>
-      </Router>
-    </CartProvider>
+            <Route path="*" element={<Navigate to="/pos" replace />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 
@@ -103,7 +114,7 @@ function App() {
       <div className="min-h-screen flex items-center justify-center">
         <div style={{ textAlign: 'center' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'hsl(var(--primary))', marginBottom: '0.5rem' }}>
-            Kasirind
+            Kassa
           </h2>
           <p style={{ color: 'hsl(var(--text-muted))' }}>Memuat...</p>
         </div>
@@ -125,11 +136,13 @@ function App() {
 
   // Login → wrap dengan StoreProvider (load org/store dari DB)
   return (
-    <StoreProvider userId={user.id}>
-      <PlanProvider>
-        <AppInner user={user} onLogout={handleLogout} />
-      </PlanProvider>
-    </StoreProvider>
+    <QueryClientProvider client={queryClient}>
+      <StoreProvider userId={user.id}>
+        <PlanProvider>
+          <AppInner user={user} onLogout={handleLogout} />
+        </PlanProvider>
+      </StoreProvider>
+    </QueryClientProvider>
   );
 }
 

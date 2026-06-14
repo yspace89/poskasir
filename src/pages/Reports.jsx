@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../db/supabaseClient';
-import { RotateCcw, Eye } from 'lucide-react';
+import { useStore } from '../context/StoreContext';
+import { usePlan } from '../context/PlanContext';
+import { RotateCcw, Eye, Download, Lock } from 'lucide-react';
 import Receipt from '../components/Receipt';
 import ConfirmModal from '../components/ConfirmModal';
 import './Reports.css';
 
-export default function Reports({ userRole }) {
+export default function Reports() {
+  const { store, can } = useStore();
+  const { isPremium } = usePlan();
+
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewReceipt, setViewReceipt] = useState(null);
@@ -13,21 +18,14 @@ export default function Reports({ userRole }) {
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [transactionToVoid, setTransactionToVoid] = useState(null);
-  const [accessDeniedMessage, setAccessDeniedMessage] = useState(null);
-
-  const checkAccess = () => {
-    if (userRole === 'trainee') {
-      setAccessDeniedMessage('Maaf, peran Admin Trainee tidak memiliki izin untuk membatalkan transaksi.');
-      return false;
-    }
-    return true;
-  };
 
   const fetchTransactions = async () => {
+    if (!store) return;
     setLoading(true);
     let query = supabase
       .from('transactions')
       .select('*, transaction_items(*), profiles(full_name)')
+      .eq('store_id', store.id)
       .order('id', { ascending: false });
       
     if (dateFilter !== 'all') {
@@ -47,42 +45,33 @@ export default function Reports({ userRole }) {
          startD = new Date(lw.setHours(0,0,0,0)).toISOString();
          endD = new Date(new Date().setHours(23,59,59,999)).toISOString();
       } else if (dateFilter === 'custom') {
-         if (customStart) {
-             startD = new Date(customStart + 'T00:00:00.000Z').toISOString();
-         }
-         if (customEnd) {
-             endD = new Date(customEnd + 'T23:59:59.999Z').toISOString();
-         }
+         if (customStart) startD = new Date(customStart + 'T00:00:00.000Z').toISOString();
+         if (customEnd) endD = new Date(customEnd + 'T23:59:59.999Z').toISOString();
       }
       
       if (startD) query = query.gte('date', startD);
       if (endD) query = query.lte('date', endD);
     }
       
-    const { data, error } = await query;
-      
-    if (!error && data) {
-      setTransactions(data);
-    }
+    const { data } = await query;
+    if (data) setTransactions(data);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchTransactions();
     
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('public:transactions')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
-        fetchTransactions();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    if (store) {
+      const channel = supabase
+        .channel('public:transactions')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `store_id=eq.${store.id}` }, () => {
+          fetchTransactions();
+        })
+        .subscribe();
+      return () => { supabase.removeChannel(channel); };
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateFilter, customStart, customEnd]);
+  }, [dateFilter, customStart, customEnd, store]);
 
   const totalRevenue = transactions?.filter(t => t.status === 'completed').reduce((sum, t) => sum + t.total, 0) || 0;
   const totalTransactions = transactions?.filter(t => t.status === 'completed').length || 0;
@@ -90,24 +79,12 @@ export default function Reports({ userRole }) {
   const handleVoidConfirm = async () => {
     if (transactionToVoid) {
       try {
-        // 1. Update transaction status
         const { error: trxError } = await supabase
           .from('transactions')
           .update({ status: 'voided' })
           .eq('id', transactionToVoid.id);
           
         if (trxError) throw trxError;
-
-        // 2. Restore stock
-        for (const item of transactionToVoid.transaction_items) {
-          const { data: product } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
-          if (product) {
-            await supabase.from('products').update({
-              stock: product.stock + item.qty
-            }).eq('id', item.product_id);
-          }
-        }
-
         setTransactionToVoid(null);
         fetchTransactions();
       } catch (err) {
@@ -118,7 +95,6 @@ export default function Reports({ userRole }) {
   };
 
   const handleViewReceipt = (transaction) => {
-    // Format items to match Receipt expectations
     const formattedTransaction = {
       ...transaction,
       discountAmount: transaction.discount_amount,
@@ -134,10 +110,32 @@ export default function Reports({ userRole }) {
     setViewReceipt(formattedTransaction);
   };
 
+  const handleExportCSV = () => {
+    if (!isPremium) {
+      alert("Fitur Export CSV hanya tersedia di Paket Premium.");
+      return;
+    }
+    const headers = ['ID,Waktu,Kasir,Metode Pembayaran,Total,Status\n'];
+    const rows = transactions.map(t => 
+      `TRX-${t.id},"${new Date(t.date).toLocaleString('id-ID')}","${t.profiles?.full_name || 'Admin'}",${t.payment_method},${t.total},${t.status}`
+    ).join('\n');
+    
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Laporan_Transaksi_${store?.name}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="reports-page">
       <header className="page-header flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Laporan & Riwayat</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Laporan & Riwayat</h1>
+          <p className="text-sm text-muted">{store?.name}</p>
+        </div>
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-muted">Filter Waktu:</label>
           <select 
@@ -152,6 +150,11 @@ export default function Reports({ userRole }) {
             <option value="custom">Kustom Range</option>
             <option value="all">Semua Waktu</option>
           </select>
+          
+          <button className="btn btn-outline flex items-center gap-2" onClick={handleExportCSV}>
+            <Download size={16} /> Export CSV
+            {!isPremium && <Lock size={12} className="text-warning" />}
+          </button>
         </div>
       </header>
 
@@ -195,13 +198,9 @@ export default function Reports({ userRole }) {
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan="7" className="text-center py-4 text-muted">Memuat riwayat transaksi...</td>
-              </tr>
+              <tr><td colSpan="7" className="text-center py-4 text-muted">Memuat riwayat transaksi...</td></tr>
             ) : transactions?.length === 0 ? (
-              <tr>
-                <td colSpan="7" className="text-center py-4 text-muted">Belum ada transaksi.</td>
-              </tr>
+              <tr><td colSpan="7" className="text-center py-4 text-muted">Belum ada transaksi.</td></tr>
             ) : (
               transactions?.map(trx => (
                 <tr key={trx.id} className={trx.status === 'voided' ? 'opacity-50' : ''}>
@@ -221,10 +220,8 @@ export default function Reports({ userRole }) {
                         <Eye size={16} />
                       </button>
                     )}
-                    {trx.status === 'completed' && trx.transaction_items && (
-                      <button className="btn-icon" title="Void Transaksi" onClick={() => {
-                        if(checkAccess()) setTransactionToVoid(trx);
-                      }}>
+                    {trx.status === 'completed' && trx.transaction_items && can('void_transactions') && (
+                      <button className="btn-icon" title="Void Transaksi" onClick={() => setTransactionToVoid(trx)}>
                         <RotateCcw size={16} className="text-danger" />
                       </button>
                     )}
@@ -236,9 +233,7 @@ export default function Reports({ userRole }) {
         </table>
       </div>
 
-      {viewReceipt && (
-        <Receipt transaction={viewReceipt} onClose={() => setViewReceipt(null)} />
-      )}
+      {viewReceipt && <Receipt transaction={viewReceipt} onClose={() => setViewReceipt(null)} />}
 
       <ConfirmModal 
         isOpen={!!transactionToVoid}
@@ -249,16 +244,6 @@ export default function Reports({ userRole }) {
         onConfirm={handleVoidConfirm}
         onCancel={() => setTransactionToVoid(null)}
       />
-
-      <ConfirmModal 
-        isOpen={!!accessDeniedMessage}
-        title="Akses Ditolak"
-        message={accessDeniedMessage}
-        type="warning"
-        isAlert={true}
-        onCancel={() => setAccessDeniedMessage(null)}
-      />
     </div>
   );
 }
-

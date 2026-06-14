@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { supabase } from '../db/supabaseClient';
-import './Register.css';
+import { Link } from 'react-router-dom';
+import { WifiOff, Store } from 'lucide-react';
+import '../pages/Login.css'; // Re-use the Split-Screen layout classes
+import './Register.css'; // Specific register styles (like step indicator)
 
 export default function Register() {
   const [step, setStep] = useState(1); // 1=akun, 2=toko
@@ -91,86 +94,156 @@ export default function Register() {
   };
 
   return (
-    <div className="register-page">
-      <div className="register-card glass">
-        {/* Logo */}
-        <div className="register-logo">
-          <div className="logo-badge">K</div>
-          <h1>Kasirind</h1>
+    <div className="split-layout">
+      {/* Left Panel: Form */}
+      <div className="split-left">
+        <div className="login-form-container">
+          <div className="brand-header mb-6">
+            <h1 className="text-3xl font-bold text-primary mb-2">Kassa</h1>
+            <h2 className="text-xl font-semibold text-text-main">
+              {step === 1 ? 'Mulai Perjalanan Anda 🚀' : 'Langkah Terakhir 🏬'}
+            </h2>
+            <p className="text-sm text-muted mt-1">
+              {step === 1 ? 'Daftar sekarang, kelola bisnis lebih pintar dan gratis.' : 'Siapkan cabang pertama Anda untuk mulai berjualan.'}
+            </p>
+          </div>
+
+          {/* Step indicator */}
+          <div className="step-indicator mb-6">
+            <div className={`step-dot ${step >= 1 ? 'active' : ''}`}>1</div>
+            <div className={`step-line ${step >= 2 ? 'active' : ''}`} />
+            <div className={`step-dot ${step >= 2 ? 'active' : ''}`}>2</div>
+          </div>
+
+          {error && <div className="text-danger text-xs mb-4 bg-danger/10 p-3 rounded">{error}</div>}
+
+          {step === 1 ? (
+            <form onSubmit={handleRegisterAccount} className="flex-col gap-4">
+              <div className="form-group floating-group">
+                <input 
+                  type="text" 
+                  className="input floating-input" 
+                  placeholder=" "
+                  value={form.full_name} 
+                  onChange={e => set('full_name', e.target.value)}
+                  required 
+                />
+                <label className="floating-label">Nama Lengkap</label>
+              </div>
+
+              <div className="form-group floating-group">
+                <input 
+                  type="email" 
+                  className="input floating-input" 
+                  placeholder=" "
+                  value={form.email} 
+                  onChange={e => set('email', e.target.value)}
+                  required 
+                />
+                <label className="floating-label">Alamat Email</label>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="form-group floating-group flex-1">
+                  <input 
+                    type="password" 
+                    className="input floating-input" 
+                    placeholder=" "
+                    value={form.password} 
+                    onChange={e => set('password', e.target.value)}
+                    required 
+                  />
+                  <label className="floating-label">Password</label>
+                </div>
+                <div className="form-group floating-group flex-1">
+                  <input 
+                    type="password" 
+                    className="input floating-input" 
+                    placeholder=" "
+                    value={form.confirm_password} 
+                    onChange={e => set('confirm_password', e.target.value)}
+                    required 
+                  />
+                  <label className="floating-label">Ulangi Password</label>
+                </div>
+              </div>
+
+              <button className="btn btn-primary w-full mt-4 py-3 text-md btn-login" type="submit" disabled={loading}>
+                {loading ? 'Menyiapkan Akun...' : 'Lanjut ke Setup Toko →'}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleCreateStore} className="flex-col gap-4">
+              <div className="form-group floating-group">
+                <input 
+                  type="text" 
+                  className="input floating-input" 
+                  placeholder=" "
+                  value={form.store_name} 
+                  onChange={e => set('store_name', e.target.value)}
+                  required 
+                />
+                <label className="floating-label">Nama Toko / Usaha</label>
+              </div>
+
+              <div className="form-group floating-group">
+                <input 
+                  type="text" 
+                  className="input floating-input" 
+                  placeholder=" "
+                  value={form.city} 
+                  onChange={e => set('city', e.target.value)}
+                />
+                <label className="floating-label">Kota (Opsional)</label>
+              </div>
+
+              <div className="form-group floating-group">
+                <input 
+                  type="tel" 
+                  className="input floating-input" 
+                  placeholder=" "
+                  value={form.phone} 
+                  onChange={e => set('phone', e.target.value)}
+                />
+                <label className="floating-label">Nomor Telepon (Opsional)</label>
+              </div>
+
+              <button className="btn btn-primary w-full mt-4 py-3 text-md btn-login" type="submit" disabled={loading}>
+                {loading ? 'Membuat sistem...' : '🎉 Mulai Berjualan!'}
+              </button>
+            </form>
+          )}
+
+          <div className="login-hint mt-8 text-center border-t border-border pt-6">
+            <p className="text-sm text-muted">
+              Sudah punya akun Kassa? <br/>
+              <Link to="/login" className="text-primary font-bold hover:underline mt-2 inline-block">Masuk di sini</Link>
+            </p>
+          </div>
         </div>
+      </div>
 
-        {/* Step indicator */}
-        <div className="step-indicator">
-          <div className={`step-dot ${step >= 1 ? 'active' : ''}`}>1</div>
-          <div className="step-line" />
-          <div className={`step-dot ${step >= 2 ? 'active' : ''}`}>2</div>
+      {/* Right Panel: Visual & USP */}
+      <div className="split-right">
+        <div className="split-right-overlay"></div>
+        <div className="usp-content">
+          <div className="usp-cards-container">
+            <div className="usp-card glass">
+              <div className="usp-icon bg-primary/20 text-primary">
+                <WifiOff size={24} />
+              </div>
+              <h3 className="text-lg font-bold mt-3 mb-1">Offline-First Technology</h3>
+              <p className="text-sm text-white/80">Mati lampu atau internet putus? Bukan masalah. Aplikasi kasir tetap jalan tanpa henti.</p>
+            </div>
+            <div className="usp-card glass mt-4">
+              <div className="usp-icon bg-primary/20 text-primary">
+                <Store size={24} />
+              </div>
+              <h3 className="text-lg font-bold mt-3 mb-1">Multi-Cabang Fleksibel</h3>
+              <p className="text-sm text-white/80">Pantau performa ratusan toko, atur stok terpisah, dan bagikan produk antar cabang semudah klik.</p>
+            </div>
+          </div>
         </div>
-
-        <p className="step-label">
-          {step === 1 ? 'Buat Akun' : 'Setup Toko Pertama'}
-        </p>
-
-        {error && <div className="error-banner">{error}</div>}
-
-        {step === 1 ? (
-          <form onSubmit={handleRegisterAccount} className="register-form">
-            <div className="form-group">
-              <label>Nama Lengkap</label>
-              <input className="input" type="text" required
-                placeholder="Budi Santoso"
-                value={form.full_name} onChange={e => set('full_name', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label>Email</label>
-              <input className="input" type="email" required
-                placeholder="budi@email.com"
-                value={form.email} onChange={e => set('email', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label>Password</label>
-              <input className="input" type="password" required
-                placeholder="Min. 6 karakter"
-                value={form.password} onChange={e => set('password', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label>Konfirmasi Password</label>
-              <input className="input" type="password" required
-                placeholder="Ulangi password"
-                value={form.confirm_password} onChange={e => set('confirm_password', e.target.value)} />
-            </div>
-            <button className="btn btn-primary w-full" type="submit" disabled={loading}>
-              {loading ? 'Membuat akun...' : 'Lanjut →'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleCreateStore} className="register-form">
-            <div className="form-group">
-              <label>Nama Toko / Usaha</label>
-              <input className="input" type="text" required
-                placeholder="Warung Bu Siti"
-                value={form.store_name} onChange={e => set('store_name', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label>Kota</label>
-              <input className="input" type="text"
-                placeholder="Jakarta"
-                value={form.city} onChange={e => set('city', e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label>Nomor Telepon</label>
-              <input className="input" type="tel"
-                placeholder="08123456789"
-                value={form.phone} onChange={e => set('phone', e.target.value)} />
-            </div>
-            <button className="btn btn-primary w-full" type="submit" disabled={loading}>
-              {loading ? 'Membuat toko...' : '🎉 Mulai Berjualan!'}
-            </button>
-          </form>
-        )}
-
-        <p className="register-footer">
-          Sudah punya akun? <a href="/login">Masuk di sini</a>
-        </p>
       </div>
     </div>
   );

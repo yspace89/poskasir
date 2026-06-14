@@ -4,11 +4,10 @@ import { useStore } from '../context/StoreContext';
 import { usePlan } from '../context/PlanContext';
 import { TrendingUp, ShoppingCart, Package, AlertTriangle, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import './Dashboard.css';
 
 export default function Dashboard() {
   const { store, org } = useStore();
-  const { canUse, plan } = usePlan();
+  const { canUse } = usePlan();
   const navigate = useNavigate();
   const [stats, setStats] = useState({ revenue: 0, transactions: 0, products: 0, lowStock: 0 });
   const [recentTrx, setRecentTrx] = useState([]);
@@ -86,8 +85,8 @@ export default function Dashboard() {
   const fmtRp = (n) => 'Rp ' + n.toLocaleString('id-ID');
 
   return (
-    <div className="dashboard-page">
-      <header className="page-header">
+    <div className="p-0 sm:p-2">
+      <header className="mb-6">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-sm text-muted">{store?.name} · Hari ini, {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
@@ -99,67 +98,75 @@ export default function Dashboard() {
       ) : (
         <>
           {/* Stat Cards */}
-          <div className="dashboard-stats">
-            <div className="stat-card primary">
-              <div className="stat-icon"><TrendingUp size={22} /></div>
-              <div className="stat-body">
-                <p className="stat-label">Pendapatan Hari Ini</p>
-                <h3 className="stat-value">{fmtRp(stats.revenue)}</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white border-l-4 border-l-primary border-y border-r border-border rounded-lg p-5 flex items-start gap-4 transition hover:shadow-md">
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0">
+                <TrendingUp size={22} />
+              </div>
+              <div>
+                <p className="text-xs text-muted font-medium mb-1">Pendapatan Hari Ini</p>
+                <h3 className="text-[1.375rem] font-extrabold">{fmtRp(stats.revenue)}</h3>
               </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-icon accent"><ShoppingCart size={22} /></div>
-              <div className="stat-body">
-                <p className="stat-label">Transaksi Hari Ini</p>
-                <h3 className="stat-value">{stats.transactions}</h3>
+            <div className="bg-white border border-border rounded-lg p-5 flex items-start gap-4 transition hover:shadow-md">
+              <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center text-accent shrink-0">
+                <ShoppingCart size={22} />
+              </div>
+              <div>
+                <p className="text-xs text-muted font-medium mb-1">Transaksi Hari Ini</p>
+                <h3 className="text-[1.375rem] font-extrabold">{stats.transactions}</h3>
               </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-icon secondary"><Package size={22} /></div>
-              <div className="stat-body">
-                <p className="stat-label">Total Produk Aktif</p>
-                <h3 className="stat-value">{stats.products}</h3>
+            <div className="bg-white border border-border rounded-lg p-5 flex items-start gap-4 transition hover:shadow-md">
+              <div className="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary shrink-0">
+                <Package size={22} />
+              </div>
+              <div>
+                <p className="text-xs text-muted font-medium mb-1">Total Produk Aktif</p>
+                <h3 className="text-[1.375rem] font-extrabold">{stats.products}</h3>
               </div>
             </div>
             {stats.lowStock > 0 && (
-              <div className="stat-card warning">
-                <div className="stat-icon warn"><AlertTriangle size={22} /></div>
-                <div className="stat-body">
-                  <p className="stat-label">Stok Hampir Habis</p>
-                  <h3 className="stat-value">{stats.lowStock} produk</h3>
+              <div className="bg-white border-l-4 border-l-warning border-y border-r border-border rounded-lg p-5 flex items-start gap-4 transition hover:shadow-md">
+                <div className="w-10 h-10 bg-warning/10 rounded-xl flex items-center justify-center text-warning shrink-0">
+                  <AlertTriangle size={22} />
+                </div>
+                <div>
+                  <p className="text-xs text-muted font-medium mb-1">Stok Hampir Habis</p>
+                  <h3 className="text-[1.375rem] font-extrabold">{stats.lowStock} produk</h3>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="dashboard-grid">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             {/* Chart (Premium only) */}
             {canUse('reports_chart') ? (
-              <div className="card chart-card">
-                <div className="card-header">
-                  <h2>Penjualan 7 Hari Terakhir</h2>
+              <div className="card overflow-hidden">
+                <div className="flex justify-between items-center p-4 lg:p-5 border-b border-border">
+                  <h2 className="text-[0.9375rem] font-bold">Penjualan 7 Hari Terakhir</h2>
                 </div>
-                <div className="bar-chart">
+                <div className="flex items-end justify-around h-[140px] px-5 pt-4 pb-3 gap-2">
                   {chartData.map((d, i) => (
-                    <div key={i} className="bar-item">
-                      <div className="bar-track">
+                    <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
+                      <div className="w-full flex-1 flex items-end bg-bg-main rounded overflow-hidden">
                         <div
-                          className="bar-fill"
+                          className="w-full bg-gradient-to-t from-primary to-primary/60 rounded-t min-h-[2px] transition-all duration-400"
                           style={{ height: `${(d.value / maxChart) * 100}%` }}
                           title={fmtRp(d.value)}
                         />
                       </div>
-                      <span className="bar-label">{d.label}</span>
+                      <span className="text-[0.68rem] text-muted">{d.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="card chart-card premium-gate-card">
-                <div className="premium-gate-content">
-                  <span style={{ fontSize: '2rem' }}>📊</span>
-                  <h3>Grafik Penjualan</h3>
-                  <p>Visualisasi penjualan 7 hari tersedia di paket Premium</p>
+              <div className="card flex items-center justify-center">
+                <div className="text-center p-8 flex flex-col items-center gap-2.5">
+                  <span className="text-3xl mb-2">📊</span>
+                  <h3 className="text-base font-bold">Grafik Penjualan</h3>
+                  <p className="text-sm text-muted mb-2">Visualisasi penjualan 7 hari tersedia di paket Premium</p>
                   <button className="btn btn-primary" onClick={() => navigate('/settings?tab=plan')}>
                     ⭐ Lihat Paket Premium
                   </button>
@@ -168,25 +175,25 @@ export default function Dashboard() {
             )}
 
             {/* Recent Transactions */}
-            <div className="card recent-trx-card">
-              <div className="card-header">
-                <h2>Transaksi Terbaru</h2>
-                <button className="btn-link" onClick={() => navigate('/reports')}>
+            <div className="card">
+              <div className="flex justify-between items-center p-4 lg:p-5 border-b border-border">
+                <h2 className="text-[0.9375rem] font-bold">Transaksi Terbaru</h2>
+                <button className="flex items-center gap-1 bg-transparent border-none text-[0.8rem] text-primary font-medium cursor-pointer" onClick={() => navigate('/reports')}>
                   Lihat semua <ArrowRight size={14} />
                 </button>
               </div>
               {recentTrx.length === 0 ? (
-                <p className="empty-state">Belum ada transaksi hari ini.</p>
+                <p className="p-6 text-center text-muted text-sm">Belum ada transaksi hari ini.</p>
               ) : (
-                <div className="trx-list">
+                <div className="px-5 pb-4">
                   {recentTrx.map(t => (
-                    <div key={t.id} className="trx-row">
+                    <div key={t.id} className="flex justify-between items-center py-2.5 border-b border-border last:border-0">
                       <div>
-                        <p className="trx-id">TRX-{t.id}</p>
+                        <p className="text-[0.8rem] font-semibold">TRX-{t.id}</p>
                         <p className="text-xs text-muted">{new Date(t.date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</p>
                       </div>
                       <div className="text-right">
-                        <p className="trx-amount">{fmtRp(t.total)}</p>
+                        <p className="text-sm font-bold text-primary">{fmtRp(t.total)}</p>
                         <p className="text-xs uppercase text-muted">{t.payment_method}</p>
                       </div>
                     </div>
@@ -197,18 +204,18 @@ export default function Dashboard() {
 
             {/* Low Stock */}
             {lowStockItems.length > 0 && (
-              <div className="card low-stock-card">
-                <div className="card-header">
-                  <h2>⚠️ Stok Hampir Habis</h2>
-                  <button className="btn-link" onClick={() => navigate('/products')}>
+              <div className="card lg:col-span-2">
+                <div className="flex justify-between items-center p-4 lg:p-5 border-b border-border">
+                  <h2 className="text-[0.9375rem] font-bold">⚠️ Stok Hampir Habis</h2>
+                  <button className="flex items-center gap-1 bg-transparent border-none text-[0.8rem] text-primary font-medium cursor-pointer" onClick={() => navigate('/products')}>
                     Kelola <ArrowRight size={14} />
                   </button>
                 </div>
-                <div className="low-stock-list">
+                <div className="px-5 pb-4">
                   {lowStockItems.map(p => (
-                    <div key={p.id} className="low-stock-row">
-                      <span className="low-stock-name">{p.name}</span>
-                      <span className={`low-stock-qty ${p.stock <= 3 ? 'critical' : 'warning'}`}>
+                    <div key={p.id} className="flex justify-between items-center py-2 border-b border-border last:border-0">
+                      <span className="text-[0.8rem] font-medium">{p.name}</span>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${p.stock <= 3 ? 'bg-danger/15 text-danger' : 'bg-warning/15 text-warning'}`}>
                         Sisa {p.stock}
                       </span>
                     </div>
@@ -219,11 +226,11 @@ export default function Dashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="quick-actions">
-            <button className="quick-btn" onClick={() => navigate('/pos')}>
+          <div className="flex gap-3">
+            <button className="flex items-center gap-2.5 px-5 py-3 bg-white border border-border rounded-md cursor-pointer text-sm font-semibold text-text-main transition hover:bg-primary hover:text-white hover:border-primary shadow-sm" onClick={() => navigate('/pos')}>
               <ShoppingCart size={20} /> Buka Kasir
             </button>
-            <button className="quick-btn" onClick={() => navigate('/products')}>
+            <button className="flex items-center gap-2.5 px-5 py-3 bg-white border border-border rounded-md cursor-pointer text-sm font-semibold text-text-main transition hover:bg-primary hover:text-white hover:border-primary shadow-sm" onClick={() => navigate('/products')}>
               <Package size={20} /> Tambah Produk
             </button>
           </div>

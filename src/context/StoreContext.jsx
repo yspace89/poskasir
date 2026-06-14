@@ -46,7 +46,7 @@ export const StoreProvider = ({ children, userId }) => {
       if (storesData) setAllStores(storesData);
 
       // 3. Pilih store aktif: simpan di localStorage agar tidak reset tiap refresh
-      const savedStoreId = localStorage.getItem(`kasirind_store_${uid}`);
+      const savedStoreId = localStorage.getItem(`Kassa_store_${uid}`);
       let activeStore = storesData?.find(s => s.id === savedStoreId) || storesData?.[0];
       if (activeStore) setStore(activeStore);
 
@@ -77,7 +77,7 @@ export const StoreProvider = ({ children, userId }) => {
     const target = allStores.find(s => s.id === storeId);
     if (!target || !userId) return;
     setStore(target);
-    localStorage.setItem(`kasirind_store_${userId}`, storeId);
+    localStorage.setItem(`Kassa_store_${userId}`, storeId);
 
     // Reload store_member permissions untuk toko baru
     const { data: smData } = await supabase

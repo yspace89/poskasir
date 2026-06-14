@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ShoppingCart, Package, BarChart3, LogOut, Clock, Settings, Users, Tag, LayoutDashboard, ChevronDown, Store } from 'lucide-react';
+import { ShoppingCart, Package, BarChart3, LogOut, Clock, Settings, Users, Tag, LayoutDashboard, ChevronDown, Store, Lock } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { usePlan } from '../context/PlanContext';
 import './Sidebar.css';
 
 export default function Sidebar({ onLogout, user }) {
-  const { store, org, role, allStores, switchStore } = useStore();
+  const { store, org, role, allStores, switchStore, can } = useStore();
   const { canUse, plan } = usePlan();
   const [duration, setDuration] = useState('00:00:00');
   const [showStoreSwitcher, setShowStoreSwitcher] = useState(false);
@@ -36,7 +36,7 @@ export default function Sidebar({ onLogout, user }) {
       <div className="sidebar-brand">
         <div className="brand-logo">K</div>
         <div className="brand-info">
-          <h2 className="brand-name">Kasirind</h2>
+          <h2 className="brand-name">Kassa</h2>
           <span className={`brand-plan ${plan === 'premium' ? 'premium' : 'free'}`}>
             {plan === 'premium' ? '⭐ Premium' : '🆓 Free'}
           </span>
@@ -103,39 +103,43 @@ export default function Sidebar({ onLogout, user }) {
           <span>Point of Sale</span>
         </NavLink>
 
-        {['owner', 'manager'].includes(role) && (
-          <>
-            <div className="nav-section-label">Manajemen</div>
+        <div className="nav-section-label">Manajemen</div>
 
-            <NavLink to="/products" className={navLinkClass}>
-              <Package size={18} />
-              <span>Produk</span>
-            </NavLink>
+        <NavLink to="/products" className={navLinkClass} onClick={(e) => !can('manage_products') && e.preventDefault()}>
+          <Package size={18} />
+          <span>Produk</span>
+          {!can('manage_products') && <Lock size={14} className="text-muted ml-auto" />}
+        </NavLink>
 
-            <NavLink to="/discounts" className={navLinkClass}>
-              <Tag size={18} />
-              <span>Diskon</span>
-              {!canUse('discounts') && <span className="nav-badge-premium">PRO</span>}
-            </NavLink>
+        <NavLink to="/discounts" className={navLinkClass} onClick={(e) => (!can('manage_discounts') || !canUse('discounts')) && e.preventDefault()}>
+          <Tag size={18} />
+          <span>Diskon</span>
+          {!canUse('discounts') ? (
+            <span className="nav-badge-premium ml-auto">PRO</span>
+          ) : (
+            !can('manage_discounts') && <Lock size={14} className="text-muted ml-auto" />
+          )}
+        </NavLink>
 
-            <NavLink to="/reports" className={navLinkClass}>
-              <BarChart3 size={18} />
-              <span>Laporan</span>
-            </NavLink>
+        <NavLink to="/reports" className={navLinkClass} onClick={(e) => !can('view_reports') && e.preventDefault()}>
+          <BarChart3 size={18} />
+          <span>Laporan</span>
+          {!can('view_reports') && <Lock size={14} className="text-muted ml-auto" />}
+        </NavLink>
 
-            <div className="nav-section-label">Pengaturan</div>
+        <div className="nav-section-label">Pengaturan</div>
 
-            <NavLink to="/team" className={navLinkClass}>
-              <Users size={18} />
-              <span>Tim</span>
-            </NavLink>
+        <NavLink to="/team" className={navLinkClass} onClick={(e) => !can('manage_team') && e.preventDefault()}>
+          <Users size={18} />
+          <span>Tim</span>
+          {!can('manage_team') && <Lock size={14} className="text-muted ml-auto" />}
+        </NavLink>
 
-            <NavLink to="/settings" className={navLinkClass}>
-              <Settings size={18} />
-              <span>Pengaturan</span>
-            </NavLink>
-          </>
-        )}
+        <NavLink to="/store-settings" className={navLinkClass} onClick={(e) => !can('manage_store') && e.preventDefault()}>
+          <Settings size={18} />
+          <span>Pengaturan Cabang</span>
+          {!can('manage_store') && <Lock size={14} className="text-muted ml-auto" />}
+        </NavLink>
       </nav>
 
       {/* ── Logout ── */}

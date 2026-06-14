@@ -1,5 +1,5 @@
 -- ============================================================
--- KASIRIND — Migration Seed: Toko Januari Mart
+-- Kassa — Migration Seed: Toko Januari Mart
 -- Jalankan di Supabase SQL Editor SETELAH schema.sql
 -- 
 -- Script ini akan:
@@ -156,13 +156,12 @@ INSERT INTO categories (org_id, name, icon) VALUES
   (v_org_id, 'Snack', '🍿'),
   (v_org_id, 'Sembako', '🛒'),
   (v_org_id, 'Personal Care', '🧴'),
-  (v_org_id, 'Home Care', '🧹')
-RETURNING id INTO v_cat_minuman;
+  (v_org_id, 'Home Care', '🧹');
 
-SELECT id INTO v_cat_minuman FROM categories WHERE org_id = v_org_id AND name = 'Minuman';
-SELECT id INTO v_cat_makanan FROM categories WHERE org_id = v_org_id AND name = 'Makanan';
-SELECT id INTO v_cat_snack   FROM categories WHERE org_id = v_org_id AND name = 'Snack';
-SELECT id INTO v_cat_sembako FROM categories WHERE org_id = v_org_id AND name = 'Sembako';
+SELECT id INTO v_cat_minuman  FROM categories WHERE org_id = v_org_id AND name = 'Minuman';
+SELECT id INTO v_cat_makanan  FROM categories WHERE org_id = v_org_id AND name = 'Makanan';
+SELECT id INTO v_cat_snack    FROM categories WHERE org_id = v_org_id AND name = 'Snack';
+SELECT id INTO v_cat_sembako  FROM categories WHERE org_id = v_org_id AND name = 'Sembako';
 SELECT id INTO v_cat_personal FROM categories WHERE org_id = v_org_id AND name = 'Personal Care';
 SELECT id INTO v_cat_homecare FROM categories WHERE org_id = v_org_id AND name = 'Home Care';
 
