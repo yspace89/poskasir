@@ -1,82 +1,144 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { ShoppingCart, Package, BarChart3, LogOut, Clock } from 'lucide-react';
-import { supabase } from '../db/supabaseClient';
+import { ShoppingCart, Package, BarChart3, LogOut, Clock, Settings, Users, Tag, LayoutDashboard, ChevronDown, Store } from 'lucide-react';
+import { useStore } from '../context/StoreContext';
+import { usePlan } from '../context/PlanContext';
 import './Sidebar.css';
 
 export default function Sidebar({ onLogout, user }) {
+  const { store, org, role, allStores, switchStore } = useStore();
+  const { canUse, plan } = usePlan();
   const [duration, setDuration] = useState('00:00:00');
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [showStoreSwitcher, setShowStoreSwitcher] = useState(false);
+  const [startTime] = useState(Date.now());
 
   useEffect(() => {
-    // Gunakan user.loginAt dari Supabase, atau waktu komponen pertama kali dimuat jika undefined
-    const startTime = user?.loginAt ? new Date(user.loginAt).getTime() : Date.now();
-
-    const calculateDuration = () => {
-      const now = new Date().getTime();
-      let diffMs = now - startTime;
-      
-      if (diffMs < 0) diffMs = 0; // Cegah waktu negatif jika ada perbedaan zona waktu
-
-      const hours = Math.floor(diffMs / (1000 * 60 * 60));
-      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-
-      const format = (n) => n.toString().padStart(2, '0');
-      setDuration(`${format(hours)}:${format(minutes)}:${format(seconds)}`);
+    const calc = () => {
+      const diff = Math.max(0, Date.now() - startTime);
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      const pad = n => n.toString().padStart(2, '0');
+      setDuration(`${pad(h)}:${pad(m)}:${pad(s)}`);
     };
-
-    calculateDuration(); // run once immediately
-    const interval = setInterval(calculateDuration, 1000);
-
+    calc();
+    const interval = setInterval(calc, 1000);
     return () => clearInterval(interval);
-  }, [user?.loginAt]);
+  }, [startTime]);
+
+  const navLinkClass = ({ isActive }) => `nav-link ${isActive ? 'active' : ''}`;
+
+  const canMultiOutlet = canUse('multi_outlet');
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-header" style={{ marginBottom: '1rem' }}>
-        <h2>POS Kasir</h2>
-        <div style={{ marginTop: '0.5rem' }}>
-          <p className="text-sm font-medium" style={{ margin: 0 }}>Kasir: {user?.name}</p>
-          <p className="text-xs text-muted" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-            <Clock size={12} /> Jumlah jam kerja: {duration}
-          </p>
+      {/* ── Branding ── */}
+      <div className="sidebar-brand">
+        <div className="brand-logo">K</div>
+        <div className="brand-info">
+          <h2 className="brand-name">Kasirind</h2>
+          <span className={`brand-plan ${plan === 'premium' ? 'premium' : 'free'}`}>
+            {plan === 'premium' ? '⭐ Premium' : '🆓 Free'}
+          </span>
         </div>
       </div>
-      <nav className="sidebar-nav">
-        {user?.email === 'admin@toko.com' && (
-          <button 
-            className="btn btn-primary" 
-            style={{ marginBottom: '1rem', fontSize: '12px' }}
-            disabled={isUpdating}
-            onClick={async () => {
-              setIsUpdating(true);
-              const { error } = await supabase.auth.updateUser({ email: 'admintrainee@toko.com' });
-              if (error) alert('Gagal: ' + error.message);
-              else alert('Email berhasil diubah menjadi admintrainee@toko.com! Silakan Tutup Shift dan Login ulang dengan email baru tersebut.');
-              setIsUpdating(false);
-            }}
-          >
-            Ubah Email ke Trainee
-          </button>
+
+      {/* ── Store Switcher ── */}
+      <div className="store-info">
+        <div
+          className={`store-switcher ${allStores.length > 1 && canMultiOutlet ? 'clickable' : ''}`}
+          onClick={() => allStores.length > 1 && canMultiOutlet && setShowStoreSwitcher(v => !v)}
+        >
+          <Store size={14} className="text-muted" />
+          <div className="store-switcher-text">
+            <span className="store-name">{store?.name || 'Memuat...'}</span>
+            <span className="store-city text-xs text-muted">{store?.city || ''}</span>
+          </div>
+          {allStores.length > 1 && canMultiOutlet && (
+            <ChevronDown size={14} className={`text-muted switcher-chevron ${showStoreSwitcher ? 'open' : ''}`} />
+          )}
+        </div>
+
+        {showStoreSwitcher && canMultiOutlet && (
+          <div className="store-dropdown">
+            {allStores.map(s => (
+              <button
+                key={s.id}
+                className={`store-option ${s.id === store?.id ? 'active' : ''}`}
+                onClick={() => { switchStore(s.id); setShowStoreSwitcher(false); }}
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
         )}
-        <NavLink to="/pos" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-          <ShoppingCart size={20} />
+      </div>
+
+      {/* ── User Info ── */}
+      <div className="user-info">
+        <div className="user-avatar">
+          {user?.email?.charAt(0).toUpperCase()}
+        </div>
+        <div className="user-details">
+          <p className="user-name">{user?.email?.split('@')[0]}</p>
+          <p className="user-role">{role}</p>
+        </div>
+      </div>
+
+      {/* ── Timer Shift ── */}
+      <div className="shift-timer">
+        <Clock size={12} />
+        <span>{duration}</span>
+      </div>
+
+      {/* ── Navigation ── */}
+      <nav className="sidebar-nav">
+        <NavLink to="/dashboard" className={navLinkClass}>
+          <LayoutDashboard size={18} />
+          <span>Dashboard</span>
+        </NavLink>
+
+        <NavLink to="/pos" className={navLinkClass}>
+          <ShoppingCart size={18} />
           <span>Point of Sale</span>
         </NavLink>
-        {['admin', 'trainee'].includes(user?.role) && (
+
+        {['owner', 'manager'].includes(role) && (
           <>
-            <NavLink to="/products" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <Package size={20} />
+            <div className="nav-section-label">Manajemen</div>
+
+            <NavLink to="/products" className={navLinkClass}>
+              <Package size={18} />
               <span>Produk</span>
             </NavLink>
-            <NavLink to="/reports" className={({isActive}) => `nav-link ${isActive ? 'active' : ''}`}>
-              <BarChart3 size={20} />
+
+            <NavLink to="/discounts" className={navLinkClass}>
+              <Tag size={18} />
+              <span>Diskon</span>
+              {!canUse('discounts') && <span className="nav-badge-premium">PRO</span>}
+            </NavLink>
+
+            <NavLink to="/reports" className={navLinkClass}>
+              <BarChart3 size={18} />
               <span>Laporan</span>
+            </NavLink>
+
+            <div className="nav-section-label">Pengaturan</div>
+
+            <NavLink to="/team" className={navLinkClass}>
+              <Users size={18} />
+              <span>Tim</span>
+            </NavLink>
+
+            <NavLink to="/settings" className={navLinkClass}>
+              <Settings size={18} />
+              <span>Pengaturan</span>
             </NavLink>
           </>
         )}
       </nav>
+
+      {/* ── Logout ── */}
       <div className="sidebar-footer">
         <button className="btn btn-outline w-full" onClick={onLogout}>
           <LogOut size={16} />
@@ -86,4 +148,3 @@ export default function Sidebar({ onLogout, user }) {
     </aside>
   );
 }
-

@@ -1,0 +1,43 @@
+.team-page { padding: 1.5rem; }
+.plan-limit-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  background: hsl(var(--warning) / 0.1);
+  border: 1px solid hsl(var(--warning) / 0.3);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  margin-bottom: 1.25rem;
+}
+.upgrade-link { color: hsl(var(--primary)); font-weight: 600; text-decoration: none; }
+.invite-form { padding: 1.25rem; margin-bottom: 1.25rem; }
+.invite-fields { display: flex; gap: 1rem; align-items: flex-end; }
+.invite-fields .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+.invite-fields label { font-size: 0.8rem; font-weight: 600; color: hsl(var(--text-muted)); }
+.invite-desc { font-size: 0.78rem; color: hsl(var(--text-muted)); margin-top: 0.5rem; font-style: italic; }
+.member-info { display: flex; align-items: center; gap: 0.625rem; }
+.member-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: hsl(var(--primary) / 0.15);
+  color: hsl(var(--primary));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.875rem; font-weight: 700;
+}
+.role-select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  background: white;
+  cursor: pointer;
+}
+.role-guide { padding: 1.25rem; margin-top: 1.25rem; }
+.role-grid { display: flex; flex-direction: column; gap: 0.625rem; }
+.role-item { display: flex; align-items: center; gap: 0.75rem; }
+.role-badge {
+  font-size: 0.72rem; font-weight: 700; padding: 2px 10px;
+  border-radius: 999px; white-space: nowrap; min-width: 70px; text-align: center;
+}
+.role-owner { background: hsl(221 83% 53% / 0.15); color: hsl(221 83% 45%); }
+.role-manager { background: hsl(142 71% 45% / 0.15); color: hsl(142 50% 35%); }
+.role-cashier { background: hsl(215 16% 47% / 0.15); color: hsl(215 16% 35%); }
+.role-trainee { background: hsl(38 92% 50% / 0.15); color: hsl(38 80% 35%); }
