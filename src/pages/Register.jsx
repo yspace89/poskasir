@@ -226,6 +226,7 @@ export default function Register() {
       {/* Right Panel: Visual & USP */}
       <div className="split-right">
         <div className="split-right-overlay"></div>
+        <div className="mesh-bg"></div>
         <div className="usp-content">
           <div className="usp-cards-container">
             <div className="usp-card glass">
