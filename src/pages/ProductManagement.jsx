@@ -32,15 +32,9 @@ export default function ProductManagement({ userRole }) {
     return true;
   };
 
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, []);
-
   const fetchProducts = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('products')
+    const { data } = await supabase.from('products')
       .select('*, categories(name)')
       .order('id', { ascending: false });
     
@@ -52,6 +46,11 @@ export default function ProductManagement({ userRole }) {
     const { data } = await supabase.from('categories').select('*').order('name');
     if (data) setCategories(data);
   };
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, []);
 
   const handleOpenModal = (product = null) => {
     if (product) {
@@ -343,3 +342,4 @@ export default function ProductManagement({ userRole }) {
     </div>
   );
 }
+

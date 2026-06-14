@@ -34,6 +34,7 @@ export default function Login({ onLogin }) {
         onLogin(userObj);
       }
     } catch (err) {
+      console.error(err);
       setError('Terjadi kesalahan koneksi autentikasi.');
     } finally {
       setLoading(false);

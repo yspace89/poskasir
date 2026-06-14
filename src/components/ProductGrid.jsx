@@ -10,13 +10,25 @@ export default function ProductGrid() {
   const [loading, setLoading] = useState(true);
   const { addToCart, cart } = useCart();
   
+  const fetchProducts = async () => {
+    const { data } = await supabase
+      .from('products')
+      .select('*, categories(name)')
+      .order('id', { ascending: false });
+    
+    if (data) {
+      setProducts(data);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
     fetchProducts();
     
     // Subscribe to realtime changes on products table
     const channel = supabase
       .channel('public:products')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, payload => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
         fetchProducts();
       })
       .subscribe();
@@ -24,19 +36,8 @@ export default function ProductGrid() {
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('name');
-      
-    if (!error && data) {
-      setProducts(data);
-    }
-    setLoading(false);
-  };
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -102,3 +103,4 @@ export default function ProductGrid() {
     </div>
   );
 }
+

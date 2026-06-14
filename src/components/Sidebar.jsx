@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { ShoppingCart, Package, BarChart3, LogOut, Clock } from 'lucide-react';
+import { supabase } from '../db/supabaseClient';
 import './Sidebar.css';
 
 export default function Sidebar({ onLogout, user }) {
@@ -50,7 +51,6 @@ export default function Sidebar({ onLogout, user }) {
             disabled={isUpdating}
             onClick={async () => {
               setIsUpdating(true);
-              const { supabase } = await import('../db/supabaseClient');
               const { error } = await supabase.auth.updateUser({ email: 'admintrainee@toko.com' });
               if (error) alert('Gagal: ' + error.message);
               else alert('Email berhasil diubah menjadi admintrainee@toko.com! Silakan Tutup Shift dan Login ulang dengan email baru tersebut.');
@@ -86,3 +86,4 @@ export default function Sidebar({ onLogout, user }) {
     </aside>
   );
 }
+

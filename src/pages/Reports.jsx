@@ -23,22 +23,6 @@ export default function Reports({ userRole }) {
     return true;
   };
 
-  useEffect(() => {
-    fetchTransactions();
-    
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('public:transactions')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, payload => {
-        fetchTransactions();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [dateFilter, customStart, customEnd]);
-
   const fetchTransactions = async () => {
     setLoading(true);
     let query = supabase
@@ -82,6 +66,23 @@ export default function Reports({ userRole }) {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchTransactions();
+    
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('public:transactions')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+        fetchTransactions();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateFilter, customStart, customEnd]);
 
   const totalRevenue = transactions?.filter(t => t.status === 'completed').reduce((sum, t) => sum + t.total, 0) || 0;
   const totalTransactions = transactions?.filter(t => t.status === 'completed').length || 0;
@@ -260,3 +261,4 @@ export default function Reports({ userRole }) {
     </div>
   );
 }
+
